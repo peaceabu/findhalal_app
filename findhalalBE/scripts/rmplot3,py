@@ -1,0 +1,58 @@
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Room dimensions in mm (converted from meters)
+main_room = (4880, 5200) # L-shaped main room (length, width)
+left_upper_L = (1800, 4000)
+left_lower_L = (1200, 2400)
+
+# Grid size (each tile is 600x600 mm)
+grid_size = 600
+
+# Create a plot for the layout
+fig, ax = plt.subplots()
+
+# Plot the rooms (main room and the L-shaped part)
+ax.plot([0, 0, main_room[0], main_room[0], 0], [0, main_room[1], main_room[1], 0, 0], 'k-')
+ax.plot([0, 0, left_upper_L[0], left_upper_L[0], 0], [main_room[1], main_room[1] + left_upper_L[1], main_room[1] + left_upper_L[1], main_room[1], main_room[1]], 'k-')
+ax.plot([left_lower_L[0], left_lower_L[0], 0, 0], [main_room[1], main_room[1] - left_lower_L[1], main_room[1] - left_lower_L[1], main_room[1]], 'k-')
+
+# Create grid
+x_ticks = np.arange(0, main_room[0] + grid_size, grid_size)
+y_ticks = np.arange(0, main_room[1] + grid_size, grid_size)
+ax.set_xticks(x_ticks)
+ax.set_yticks(y_ticks)
+ax.grid(True)
+
+# Define function to check adjacency
+def is_adjacent(light_pos, all_lights):
+    x, y = light_pos
+    for lx, ly in all_lights:
+        if abs(x - lx) <= grid_size and abs(y - ly) <= grid_size:
+            return True
+    return False
+
+# Place lights (yellow squares)
+lights = []
+for i in range(1, len(x_ticks), 2):
+    for j in range(1, len(y_ticks), 2):
+        if not is_adjacent((x_ticks[i], y_ticks[j]), lights):
+            lights.append((x_ticks[i], y_ticks[j]))
+            ax.add_patch(plt.Rectangle((x_ticks[i] - grid_size/2, y_ticks[j] - grid_size/2), grid_size, grid_size, color='yellow', alpha=0.5))
+
+# Place sprinklers (red dots) and draw coverage (blue circle)
+sprinklers = []
+for i in range(2, len(x_ticks), 3):
+    for j in range(2, len(y_ticks), 3):
+        if not is_adjacent((x_ticks[i], y_ticks[j]), lights):
+            sprinklers.append((x_ticks[i], y_ticks[j]))
+            ax.plot(x_ticks[i], y_ticks[j], 'ro')
+            coverage = plt.Circle((x_ticks[i], y_ticks[j]), 1500, color='blue', fill=False)
+            ax.add_patch(coverage)
+
+# Set equal scaling
+ax.set_aspect('equal')
+plt.xlim(-100, main_room[0] + 100)
+plt.ylim(-100, main_room[1] + 100)
+
+plt.show()
